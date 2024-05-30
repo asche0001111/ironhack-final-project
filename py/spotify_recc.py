@@ -5,27 +5,41 @@ from sklearn.cluster import KMeans
 import numpy as np
 from sklearn.metrics.pairwise import euclidean_distances
 
-def authenticate_spotify():
-    while True:
-        client_id = input("Enter your Spotify client ID: ")
-        print(f".{client_id}.")
-        client_secret = input("Enter your Spotify client secret: ")
-        print(f".{client_secret}.")
-        
-        # Validate Spotify credentials
-        if not client_id or not client_secret:
-            print("Invalid credentials. Please enter both client ID and client secret.")
-            continue
+#def authenticate_spotify():
+#    while True:
+#        client_id = input("Enter your Spotify client ID: ")
+#        print(f".{client_id}.")
+#        client_secret = input("Enter your Spotify client secret: ")
+#        print(f".{client_secret}.")
+#        
+#        # Validate Spotify credentials
+#        if not client_id or not client_secret:
+#            print("Invalid credentials. Please enter both client ID and client secret.")
+#            continue
+#
+#        try:
+#            auth_manager = SpotifyClientCredentials(client_id=client_id, client_secret=client_secret)
+#            sp = spotipy.Spotify(auth_manager=auth_manager)
+#            # Use a public track ID to test the credentials
+#            sp.track('3n3Ppam7vgaVa1iaRUc9Lp')  # This is a known public track ID
+#            return sp
+#        except spotipy.exceptions.SpotifyException as e:
+#            print("Authentication failed. Please check your credentials and try again.")
+#            continue
 
-        try:
-            auth_manager = SpotifyClientCredentials(client_id=client_id, client_secret=client_secret)
-            sp = spotipy.Spotify(auth_manager=auth_manager)
-            # Use a public track ID to test the credentials
-            sp.track('3n3Ppam7vgaVa1iaRUc9Lp')  # This is a known public track ID
-            return sp
-        except spotipy.exceptions.SpotifyException as e:
-            print("Authentication failed. Please check your credentials and try again.")
-            continue
+def authenticate_spotify(client_id, client_secret):
+    # Validate Spotify credentials
+    if not client_id or not client_secret:
+        return None  # Invalid credentials
+
+    try:
+        auth_manager = SpotifyClientCredentials(client_id=client_id, client_secret=client_secret)
+        sp = spotipy.Spotify(auth_manager=auth_manager)
+        # Use a public track ID to test the credentials
+        sp.track('3n3Ppam7vgaVa1iaRUc9Lp')  # This is a known public track ID
+        return sp
+    except spotipy.exceptions.SpotifyException as e:
+        return None  # Authentication failed
 
 def extract_track_id(spotify_url):
     match = re.match(r'(https?://open\.spotify\.com/track/|spotify:track:)([a-zA-Z0-9]+)', spotify_url)

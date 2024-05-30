@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recommendation App</title>
+    <style>
+        body {
+            font-family: monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: white;
+            margin: 0;
+            padding: 0;
+        }
+        h1 {
+            margin-top: 20px;
+        }
+        .input-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 880px; /* Increased by 10% from 800px */
+            padding: 20px 10px; /* Padding adjusted */
+            box-sizing: border-box;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        .input-group input {
+            width: calc(100% - 20px); /* Adjusted width */
+            height: 40px;
+            padding: 10px;
+            margin: 5px 0; /* Padding between the bars reduced */
+            border: 1px solid black;
+            box-sizing: border-box;
+            font-family: monospace; /* Monospace font */
+        }
+        .horizontal-group {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin: 0;
+        }
+        .horizontal-group input {
+            width: calc(50% - 5px); /* Adjusted width */
+            height: 40px; /* Ensure the same height */
+            margin: 5px 0; /* Adjusted margin */
+            border: 1px solid black;
+            box-sizing: border-box;
+            font-family: monospace; /* Monospace font */
+        }
+
+        .recommendations-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 880px; /* Increased by 10% from 800px */
+            padding: 20px 10px; /* Padding adjusted */
+            box-sizing: border-box;
+        }
+        .recommendation-box {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            background-color: white;
+            border: 1px solid black;
+            padding: 10px;
+            margin: 10px 0;
+            box-sizing: border-box;
+        }
+        .recommendation-box img {
+            max-width: 100px;
+            max-height: 100px;
+        }
+        .recommendation-content {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            width: calc(100% - 120px);
+        }
+        .recommendation-link {
+            align-self: flex-start;
+        }
+    </style>
+</head>
+<body>
+    <h1>Recommendation App</h1>
+    {% if error_message %}
+    <p style="color: red;">{{ error_message }}</p>
+    {% endif %}
+    <form action="{{ url_for('recommend') }}" method="post" class="input-container">
+        <div class="horizontal-group">
+            <input type="text" id="spotify_client_id" name="spotify_client_id" placeholder="Spotify Client ID">
+            <input type="text" id="spotify_client_secret" name="spotify_client_secret" placeholder="Spotify Client Secret">
+        </div>
+        <div class="input-group">
+            <input type="text" id="link" name="link" placeholder="Enter a Spotify track URL, an IMDb link, or a Google Books URL">
+            <input type="submit" value="Submit">
+        </div>
+    </form>
+
+    {% if recommendations %}
+    <div class="recommendations-container">
+        <h2>{{ recommendations_title }}</h2>
+        {% for recommendation in recommendations %}
+        <div class="recommendation-box">
+            <div class="recommendation-content">
+                <p><strong>Title:</strong> {{ recommendation.title }}</p>
+                <p><strong>Description:</strong> {{ recommendation.description }}</p>
+                {% if recommendation.genre %}
+                    <p><strong>Genre:</strong> {{ recommendation.genre }}</p>
+                {% endif %}
+                {% if recommendation.director %}
+                    <p><strong>Director:</strong> {{ recommendation.director }}</p>
+                {% endif %}
+                {% if recommendation.artist %}
+                    <p><strong>Artist:</strong> {{ recommendation.artist }}</p>
+                {% endif %}
+                {% if recommendation.album %}
+                    <p><strong>Album:</strong> {{ recommendation.album }}</p>
+                {% endif %}
+                {% if recommendation.author %}
+                    <p><strong>Author:</strong> {{ recommendation.author }}</p>
+                {% endif %}
+                {% if recommendation.genres %}
+                    <p><strong>Genres:</strong> {{ recommendation.genres }}</p>
+                {% endif %}
+                {% if recommendation.url %}
+                    <p class="recommendation-link"><a href="{{ recommendation.url }}" target="_blank">Listen on Spotify</a></p>
+                {% endif %}
+                {% if recommendation.book_url %}
+                    <p class="recommendation-link"><a href="{{ recommendation.book_url }}" target="_blank">View on Google Books</a></p>
+                {% endif %}
+            </div>
+            {% if recommendation.poster %}
+                <img src="{{ recommendation.poster }}" alt="Poster">
+            {% endif %}
+            {% if recommendation.album_art_url %}
+                <img src="{{ recommendation.album_art_url }}" alt="Album Art">
+            {% endif %}
+            {% if recommendation.cover_url %}
+                <img src="{{ recommendation.cover_url }}" alt="Book Cover">
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</body>
+</html>
+
