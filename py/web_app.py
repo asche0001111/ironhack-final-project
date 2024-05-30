@@ -3,12 +3,13 @@ import os
 import pandas as pd
 import numpy as np
 from sklearn.cluster import KMeans
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, session
 from spotify_recc import authenticate_spotify, extract_track_id, get_track_details, get_related_artists, get_related_top, get_related_features, recommend_tracks
 from movie_recc import preprocess_text as preprocess_movie_text, compute_features, cosine_similarity_matrix, get_recommendations, extract_imdb_id, fill_missing_info
 from book_recc import fetch_book_details, extract_volume_id, format_book_data, preprocess_text as preprocess_book_text, compute_similarity, find_recommendations, search_google_books
 
 app = Flask(__name__)
+app.secret_key = 'supersecretkey'
 
 template_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'templates'))
 app.template_folder = template_dir
@@ -24,24 +25,31 @@ def index():
 def process_link():
     if request.method == 'POST':
         link = request.form['link']
-        link
         return redirect(url_for('index'))
 
 @app.route('/recommend', methods=['POST'])
 def recommend():
-    spotify_client_id = request.form['spotify_client_id']
-    spotify_client_secret = request.form['spotify_client_secret']
+    if 'spotify_client_id' in session and 'spotify_client_secret' in session:
+        spotify_client_id = session['spotify_client_id']
+        spotify_client_secret = session['spotify_client_secret']
+    else:
+        spotify_client_id = request.form['spotify_client_id']
+        spotify_client_secret = request.form['spotify_client_secret']
+        session['spotify_client_id'] = spotify_client_id
+        session['spotify_client_secret'] = spotify_client_secret
+
     sp = authenticate_spotify_with_form(spotify_client_id, spotify_client_secret)
     link = request.form['link']
     recommendations = []
     recommendations_title = ""
 
-    # Check if the link is a Spotify link
     if "open.spotify.com" in link or "spotify:track:" in link:
         if sp is None:
             error_message = "Spotify authentication failed. Please check your credentials and try again."
+            session.pop('spotify_client_id', None)
+            session.pop('spotify_client_secret', None)
             return render_template('index.html', error_message=error_message)
-        
+
         spotify_url = link
         track_id = extract_track_id(spotify_url)
         track_data = get_track_details(sp, track_id)
@@ -62,8 +70,7 @@ def recommend():
                 'album_art_url': track['album_art_url'],
                 'url': track['url']
             })
-    
-    # Check if the link is an IMDb link
+
     elif "imdb.com/title/tt" in link:
         df = pd.read_csv("imdb-movies-dataset.csv")
         df['Genre'] = df['Genre'].fillna('')
@@ -92,8 +99,7 @@ def recommend():
                 recommendations_title = "Failed to retrieve movie information from IMDb."
         else:
             recommendations_title = "Invalid IMDb link. Please provide a valid IMDb link."
-    
-    # Check if the link is a Google Books link
+
     elif "google" and "books" in link:
         df = pd.read_csv("goodreads_data.csv")
         df.drop(columns=["Unnamed: 0", "URL"], inplace=True)

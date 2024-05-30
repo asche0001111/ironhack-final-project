@@ -28,17 +28,15 @@ from sklearn.metrics.pairwise import euclidean_distances
 #            continue
 
 def authenticate_spotify(client_id, client_secret):
-    # Validate Spotify credentials
     if not client_id or not client_secret:
         return None  # Invalid credentials
 
     try:
         auth_manager = SpotifyClientCredentials(client_id=client_id, client_secret=client_secret)
         sp = spotipy.Spotify(auth_manager=auth_manager)
-        # Use a public track ID to test the credentials
         sp.track('3n3Ppam7vgaVa1iaRUc9Lp')  # This is a known public track ID
         return sp
-    except spotipy.exceptions.SpotifyException as e:
+    except (spotipy.exceptions.SpotifyException, Exception) as e:
         return None  # Authentication failed
 
 def extract_track_id(spotify_url):
