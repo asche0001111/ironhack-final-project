@@ -31,14 +31,14 @@ def fetch_book_details(volume_id):
         return response.json()
     else:
         return None
-    
+
 def extract_volume_id(url):
     match = re.search(r'/books/edition/.+/([^/?]+)', url)
     if match:
         return match.group(1)
     else:
         return None
-    
+
 def format_book_data(book_data):
     volume_info = book_data.get("volumeInfo", {})
     book = volume_info.get("title", "N/A")
@@ -46,7 +46,7 @@ def format_book_data(book_data):
     description = volume_info.get("description", "N/A")
     genres = ", ".join(volume_info.get("categories", ["N/A"]))
     avg_rating = volume_info.get("averageRating", "N/A")
-    
+
     book_dict = {
         "Book": book,
         "Author": authors,
@@ -54,7 +54,7 @@ def format_book_data(book_data):
         "Genres": genres,
         "Avg_Rating": avg_rating
     }
-    
+
     return book_dict
 
 def search_google_books(book_title, author):
@@ -73,7 +73,7 @@ def search_google_books(book_title, author):
 def preprocess_text(text):
     if pd.isnull(text):  # Check if the text is NaN
         return ""        # If NaN, return an empty string
-    
+
     # Tokenize, lemmatize, and remove stopwords
     tokens = word_tokenize(text)
     clean_tokens = [lemmatizer.lemmatize(token.lower()) for token in tokens if token.isalnum() and token.lower() not in stop_words]
@@ -98,45 +98,3 @@ def find_recommendations(input_book_idx, book_data, description_similarity, genr
     similar_books = [(book_data.iloc[idx]["Book"], book_data.iloc[idx]["Author"]) for idx in similar_indices]
 
     return similar_books
-
-def main():
-    url = input("Paste your Google Books URL here: ")
-    volume_id = extract_volume_id(url)
-    book_data = fetch_book_details(volume_id)
-    formatted_data = format_book_data(book_data)
-
-    input_book = formatted_data["Book"]
-    input_description = preprocess_text(formatted_data["Description"])
-    input_genres = preprocess_text(formatted_data["Genres"])
-
-    # Add input book's data to the dataframe using pd.concat
-    input_book_df = pd.DataFrame([{
-        "Book": input_book,
-        "Description": input_description,
-        "Genres": input_genres,
-        "Author": formatted_data["Author"]
-    }])
-    
-    df_extended = pd.concat([df, input_book_df], ignore_index=True)
-
-    # Compute similarity
-    description_similarity, genre_similarity = compute_similarity(df_extended["Description"], df_extended["Genres"])
-
-    # Find recommendations
-    input_book_idx = df_extended.index[df_extended["Book"] == input_book][0]
-    recommendations = find_recommendations(input_book_idx, df_extended, description_similarity, genre_similarity)
-    
-    print(f"Recommendations for '{input_book}':")
-    for book, author in recommendations:
-        cover_url, book_url = search_google_books(book, author)
-        book_row = df_extended[df_extended['Book'] == book].iloc[0]
-        print(f"Title: {book}")
-        print(f"Author: {author}")
-        print(f"Description: {book_row['Description']}")
-        print(f"Genres: {book_row['Genres']}")
-        print(f"Cover: {cover_url}")
-        print(f"Link: {book_url}")
-        print()
-
-if __name__ == "__main__":
-    main()
