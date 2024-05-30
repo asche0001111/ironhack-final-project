@@ -14,12 +14,6 @@ from bs4 import BeautifulSoup
 nltk.download('stopwords')
 nltk.download('punkt')
 
-# Load and preprocess dataset
-df = pd.read_csv("imdb-movies-dataset.csv")
-df['Genre'] = df['Genre'].fillna('')
-df['Genre'] = df['Genre'].astype(str)
-df['Genre'] = df['Genre'].apply(lambda x: x.split(', '))
-
 def preprocess_text(text):
     if pd.isna(text):
         return ''
@@ -29,9 +23,6 @@ def preprocess_text(text):
     tokens = [word for word in tokens if word.isalpha() and word not in stop_words]
     return ' '.join(tokens)
 
-df['preprocessed_description'] = df['Description'].apply(preprocess_text)
-
-# Feature extraction function
 def compute_features(df):
     tfidf_vectorizer = TfidfVectorizer(max_features=5000)
     tfidf_matrix = tfidf_vectorizer.fit_transform(df['preprocessed_description'])
@@ -40,8 +31,8 @@ def compute_features(df):
     combined_features = np.hstack((tfidf_matrix.toarray(), genre_matrix))
     return combined_features
 
-combined_features = compute_features(df)
-cosine_sim = cosine_similarity(combined_features, combined_features)
+def cosine_similarity_matrix(combined_features):
+    return cosine_similarity(combined_features, combined_features)
 
 def get_recommendations(title, cosine_sim, df):
     if title not in df['Title'].values:
@@ -65,8 +56,7 @@ def get_recommendations(title, cosine_sim, df):
             if len(recommended_movies) == 3:
                 break
 
-    return pd.DataFrame(recommended_movies)
-
+    return recommended_movies
 
 def extract_imdb_id(imdb_link):
     imdb_id = re.search(r'tt\d+', imdb_link)
@@ -93,37 +83,3 @@ def fill_missing_info(df, imdb_id):
             new_movie_df = pd.DataFrame([new_movie])
             df = pd.concat([df, new_movie_df], ignore_index=True)
     return df
-
-def main():
-    imdb_link = input('Please paste your IMDb link here: ')
-    imdb_id = extract_imdb_id(imdb_link)
-    if imdb_id:
-        global df, combined_features, cosine_sim
-        df = fill_missing_info(df, imdb_id)
-        if not df.empty:
-            df['preprocessed_description'] = df['Description'].apply(preprocess_text)
-            combined_features = compute_features(df)
-            cosine_sim = cosine_similarity(combined_features, combined_features)
-            movie_title = df.iloc[-1]['Title']
-            #print("Movie Title:", movie_title)
-            #print("DataFrame:", df.iloc[-1])
-            recommendations = get_recommendations(movie_title, cosine_sim, df)
-            print(f"Recommendations for '{movie_title}':")
-            recommended_titles = []
-            for idx, row in recommendations.iterrows():
-                if row['Title'] != movie_title and row['Title'] not in recommended_titles:
-                    recommended_titles.append(row['Title'])
-                    print(f"Title: {row['Title']}\n"
-                          f"Description: {row['Description']}\n"
-                          f"Genre: {row['Genre']}\n"
-                          f"Director: {row['Director']}\n"
-                          f"Poster: {row['Poster']}\n")
-                    if len(recommended_titles) == 4:
-                        break
-        else:
-            print("Failed to retrieve movie information from IMDb.")
-    else:
-        print("Invalid IMDb link. Please provide a valid IMDb link.")
-
-if __name__ == "__main__":
-    main()
